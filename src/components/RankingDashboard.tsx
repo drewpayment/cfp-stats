@@ -202,26 +202,6 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
     router.push(`/?${params.toString()}`);
   };
 
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      const res = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: currentYear })
-      });
-      if (!res.ok) throw new Error('Sync failed');
-      alert(`Successfully synced data for ${currentYear}`);
-      router.refresh();
-    } catch (e) {
-      alert('Failed to sync data. Please try again.');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -306,31 +286,9 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
             ))}
           </select>
         </div>
-
-        <button
-          onClick={handleSync}
-          disabled={isSyncing}
-          style={{
-            background: isSyncing ? '#475569' : 'linear-gradient(90deg, #10b981, #3b82f6)',
-            border: 'none',
-            color: 'white',
-            padding: '10px 24px',
-            borderRadius: '6px',
-            fontSize: '0.85rem',
-            fontWeight: '700',
-            cursor: isSyncing ? 'not-allowed' : 'pointer',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          {isSyncing ? '⏳ SYNCING...' : '🔄 SYNC DATA'}
-        </button>
       </div>
 
-      {/* Original Controls div, now starting with Conference filter */}
+      {/* Controls Row 2: Conference & Search */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -492,11 +450,21 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
                 </td>
                 <td style={{ ...tdStyle, fontWeight: '600' }}>{team.record}</td>
                 <td style={{ ...tdStyle, fontWeight: '900', fontSize: '0.95rem', color: getColorForPercentile(team.composite) }}>{team.composite}</td>
-                {METRICS.map(m => (
-                  <td key={m.key} style={{ ...tdStyle, background: `rgba(${team[`${m.key}Pctl`] > 75 ? '16, 185, 129' : team[`${m.key}Pctl`] > 50 ? '234, 179, 8' : '239, 68, 68'}, ${(team[`${m.key}Pctl`] || 0) / 350})`, fontSize: '0.7rem' }}>
-                    {team[m.key]}
-                  </td>
-                ))}
+                {METRICS.map(m => {
+                  const pctlKey = `${m.key}Pctl`;
+                  const isTwoTeamComparison = showComparison && sortedTeams.length === 2;
+                  const otherTeam = isTwoTeamComparison ? sortedTeams.find(t => t.team !== team.team) : null;
+                  const isBetter = isTwoTeamComparison && otherTeam && (team[pctlKey] || 0) > (otherTeam[pctlKey] || 0);
+                  const showBackground = !isTwoTeamComparison || isBetter;
+                  const bgColor = showBackground
+                    ? `rgba(${team[pctlKey] > 75 ? '16, 185, 129' : team[pctlKey] > 50 ? '234, 179, 8' : '239, 68, 68'}, ${(team[pctlKey] || 0) / 350})`
+                    : 'transparent';
+                  return (
+                    <td key={m.key} style={{ ...tdStyle, background: bgColor, fontSize: '0.7rem', fontWeight: isBetter ? '700' : '400', opacity: isTwoTeamComparison && !isBetter ? 0.5 : 1 }}>
+                      {team[m.key]}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

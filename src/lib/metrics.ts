@@ -249,8 +249,14 @@ export async function getRankings(pollName: string = 'AP Top 25', year?: number)
   ];
 
   METRICS.forEach(metric => {
-    const values = results.map((r: any) => r[metric.key]).sort((a: number, b: number) => a - b);
+    // Filter out zero/invalid values before calculating percentiles
+    const validResults = results.filter((r: any) => r[metric.key] > 0);
+    const values = validResults.map((r: any) => r[metric.key]).sort((a: number, b: number) => a - b);
     results.forEach((r: any) => {
+      if (r[metric.key] <= 0) {
+        r[`${metric.key}Pctl`] = 50; // Default for missing data
+        return;
+      }
       const rank = values.indexOf(r[metric.key]);
       const percentile = (rank / (values.length - 1 || 1)) * 100;
       r[`${metric.key}Pctl`] = metric.higherBetter ? percentile : (100 - percentile);

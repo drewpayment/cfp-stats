@@ -11,7 +11,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
   return (
     <main>
-      <RankingDashboard initialData={rankings} currentPoll={poll} currentYear={year || 2024} />
+      <RankingDashboard initialData={rankings} currentPoll={poll} currentYear={year || new Date().getFullYear()} />
     </main>
   );
 }

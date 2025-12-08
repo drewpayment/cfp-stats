@@ -2,7 +2,7 @@ import { syncData } from '@/lib/sync';
 
 export async function GET(request: Request) {
   // Validate CRON_SECRET
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers.get('Authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
