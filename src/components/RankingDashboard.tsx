@@ -29,6 +29,7 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
   const [teamSearch, setTeamSearch] = useState('');
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [headToHeadView, setHeadToHeadView] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
@@ -363,6 +364,39 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
           {showComparison ? 'Exit Comparison' : selectionMode ? 'Done Selecting' : 'Select Teams'}
         </button>
 
+        {showComparison && sortedTeams.length === 2 && (
+          <div style={{ display: 'flex', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', border: '2px solid #475569' }}>
+            <button
+              onClick={() => setHeadToHeadView(false)}
+              style={{
+                background: !headToHeadView ? '#3b82f6' : 'transparent',
+                border: 'none',
+                color: 'white',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              Table
+            </button>
+            <button
+              onClick={() => setHeadToHeadView(true)}
+              style={{
+                background: headToHeadView ? '#3b82f6' : 'transparent',
+                border: 'none',
+                color: 'white',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              Head-to-Head
+            </button>
+          </div>
+        )}
+
         {selectionMode && !showComparison && (
           <button
             onClick={() => setShowComparison(true)}
@@ -386,7 +420,117 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
         )}
       </div>
 
+      {/* Head-to-Head View */}
+      {headToHeadView && showComparison && sortedTeams.length === 2 && (
+        <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
+          {/* Team Headers */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '16px', background: '#1e293b', borderRadius: '12px' }}>
+            <div style={{ textAlign: 'center', flex: 1 }}>
+              {sortedTeams[0].logo && <img src={sortedTeams[0].logo} alt="" style={{ width: '48px', height: '48px', objectFit: 'contain', marginBottom: '8px' }} />}
+              <div style={{ fontWeight: '700', fontSize: '1.1rem' }}>{sortedTeams[0].team}</div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{sortedTeams[0].pollRank ? `#${sortedTeams[0].pollRank}` : ''} · {sortedTeams[0].record}</div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#64748b', padding: '0 16px' }}>vs</div>
+            <div style={{ textAlign: 'center', flex: 1 }}>
+              {sortedTeams[1].logo && <img src={sortedTeams[1].logo} alt="" style={{ width: '48px', height: '48px', objectFit: 'contain', marginBottom: '8px' }} />}
+              <div style={{ fontWeight: '700', fontSize: '1.1rem' }}>{sortedTeams[1].team}</div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{sortedTeams[1].pollRank ? `#${sortedTeams[1].pollRank}` : ''} · {sortedTeams[1].record}</div>
+            </div>
+          </div>
+
+          {/* Metrics Rows */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {METRICS.map((m, idx) => {
+              const pctlKey = `${m.key}Pctl`;
+              const team1Better = (sortedTeams[0][pctlKey] || 0) > (sortedTeams[1][pctlKey] || 0);
+              const team2Better = (sortedTeams[1][pctlKey] || 0) > (sortedTeams[0][pctlKey] || 0);
+              return (
+                <div key={m.key} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: idx % 2 === 0 ? '#1e293b' : '#0f172a',
+                  borderRadius: '4px',
+                  padding: '12px 16px'
+                }}>
+                  <div style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    fontWeight: team1Better ? '700' : '400',
+                    color: team1Better ? '#10b981' : '#94a3b8',
+                    fontSize: '1rem'
+                  }}>
+                    {sortedTeams[0][m.key]}
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: '0.7rem',
+                    color: '#64748b',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}>
+                    <span className="metric-full" style={{ display: 'block' }}>{m.name}</span>
+                    <span className="metric-short" style={{ display: 'none' }}>{m.short}</span>
+                    <span style={{ fontSize: '0.6rem', color: '#475569' }}>{m.higherBetter ? '↑' : '↓'}</span>
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    fontWeight: team2Better ? '700' : '400',
+                    color: team2Better ? '#10b981' : '#94a3b8',
+                    fontSize: '1rem'
+                  }}>
+                    {sortedTeams[1][m.key]}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Composite Score Row */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'linear-gradient(90deg, #1e293b, #2d3748, #1e293b)',
+              borderRadius: '8px',
+              padding: '16px',
+              marginTop: '8px',
+              border: '2px solid #3b82f6'
+            }}>
+              <div style={{
+                flex: 1,
+                textAlign: 'center',
+                fontWeight: '900',
+                color: sortedTeams[0].composite > sortedTeams[1].composite ? '#10b981' : '#94a3b8',
+                fontSize: '1.5rem'
+              }}>
+                {sortedTeams[0].composite}
+              </div>
+              <div style={{
+                flex: 1,
+                textAlign: 'center',
+                fontSize: '0.8rem',
+                color: '#f1f5f9',
+                fontWeight: '600'
+              }}>
+                COMPOSITE
+              </div>
+              <div style={{
+                flex: 1,
+                textAlign: 'center',
+                fontWeight: '900',
+                color: sortedTeams[1].composite > sortedTeams[0].composite ? '#10b981' : '#94a3b8',
+                fontSize: '1.5rem'
+              }}>
+                {sortedTeams[1].composite}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
+      {!(headToHeadView && showComparison && sortedTeams.length === 2) && (
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
           <thead>
@@ -470,6 +614,7 @@ export default function RankingDashboard({ initialData, currentPoll, currentYear
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Legend Modal */}
       {isLegendOpen && (

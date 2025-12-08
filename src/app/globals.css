@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Head-to-head comparison responsive styles */
+@media (max-width: 480px) {
+  .metric-full {
+    display: none !important;
+  }
+  .metric-short {
+    display: block !important;
+  }
+}
