@@ -38,6 +38,7 @@ bun scripts/test-db.js    # Test database connection
 **Data Flow:**
 1. Page loads → `getRankings()` queries rankings/teams/stats → calculates metrics & percentiles → passes to client
 2. User triggers sync → POST `/api/sync` → `syncData()` fetches CFBD API → upserts to Turso
+3. Scheduled sync → GitHub Actions (hourly Fri-Mon) → GET `/api/cron/sync` → checks if in-season → `syncData()`
 
 **Database Tables:**
 - `teams` - school info, colors, logos, season_stats (JSON)
@@ -51,7 +52,12 @@ bun scripts/test-db.js    # Test database connection
 TURSO_DATABASE_URL=file:local.db   # or remote Turso URL
 TURSO_AUTH_TOKEN=<token>           # required for remote Turso
 NEXT_PUBLIC_CFBD_API_KEY=<key>     # CFBD API key for data sync
+CRON_SECRET=<secret>               # secures /api/cron/sync endpoint
 ```
+
+**GitHub Secrets (for scheduled sync):**
+- `SYNC_ENDPOINT_URL` - Production cron endpoint URL
+- `CRON_SECRET` - Same value as Vercel env var
 
 ## Patterns
 

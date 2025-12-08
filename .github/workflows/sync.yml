@@ -1,0 +1,17 @@
+name: Sync CFB Data
+
+on:
+  schedule:
+    # Hourly on Fri(5), Sat(6), Sun(0), Mon(1)
+    - cron: '0 * * * 0,1,5,6'
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync endpoint
+        run: |
+          curl -X GET "${{ secrets.SYNC_ENDPOINT_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --fail --silent --show-error
