@@ -12,6 +12,24 @@ jobs:
     steps:
       - name: Trigger sync endpoint
         run: |
-          curl -X GET "${{ secrets.SYNC_ENDPOINT_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --fail --silent --show-error
+          echo "Starting sync at $(date -u)"
+
+          # Make request and capture response
+          HTTP_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X GET "${{ secrets.SYNC_ENDPOINT_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+
+          # Extract body and status code
+          HTTP_BODY=$(echo "$HTTP_RESPONSE" | sed '$d')
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tail -n 1)
+
+          echo "Response Status: $HTTP_STATUS"
+          echo "Response Body: $HTTP_BODY"
+
+          # Fail if not 2xx
+          if [[ ! "$HTTP_STATUS" =~ ^2 ]]; then
+            echo "::error::Sync failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "Sync completed successfully"
